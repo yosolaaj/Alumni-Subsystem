@@ -193,13 +193,265 @@ elif page == "Employment":
                 )
 
 elif page == "Professional Affiliations":
-    st.write("Manage professional affiliations.")
+        st.header("Add Professional Affiliation")
 
+        connection = get_connection()
+
+        alumni = connection.execute(
+        "SELECT alumni_id, first_name, last_name FROM ALUMNI"
+    ).fetchall()
+
+        connection.close()
+
+
+        if alumni:
+         alumni_options = {
+            f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
+            for person in alumni
+        }
+
+        with st.form("affiliation_form"):
+            selected_alumni = st.selectbox(
+                "Select Alumni",
+                list(alumni_options.keys())
+            )
+            organization_name = st.text_input(
+                "Organization Name"
+            )
+
+            position = st.text_input(
+                "Position or Role"
+            )
+
+            submitted = st.form_submit_button(
+                "Save Professional Affiliation"
+            )
+
+            if submitted:
+             if not organization_name.strip():
+                st.error("Organization Name is required.")
+            else:
+                connection = get_connection()
+
+                connection.execute(
+                    """
+                    INSERT INTO PROFESSIONAL_AFFILIATION
+                    (alumni_id, organization_name, position)
+                    VALUES (?, ?, ?)
+                    """,
+                    (
+                        alumni_options[selected_alumni],
+                        organization_name,
+                        position
+                    )
+                )
+
+                connection.commit()
+                connection.close()
+
+                    
+
+                st.success(
+                    "Professional affiliation saved successfully!"
+                )
 elif page == "Membership":
-    st.write("Manage alumni memberships.")
+        st.header("Add Alumni Membership")
+
+        connection = get_connection()
+
+        alumni = connection.execute(
+        "SELECT alumni_id, first_name, last_name FROM ALUMNI"
+    ).fetchall()
+
+        connection.close()
+
+        if alumni:
+                alumni_options = {
+                    f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
+                    for person in alumni
+                }
+        
+                with st.form("membership_form"):
+                    selected_alumni = st.selectbox(
+                        "Select Alumni",
+                        list(alumni_options.keys())
+                    )
+        
+                    membership_type = st.text_input(
+                        "Membership Type"
+                    )
+        
+                    start_date = st.date_input(
+                        "Start Date"
+                    )
+        
+                    expiration_date = st.date_input(
+                        "Expiration Date"
+                    )
+        
+                    submitted = st.form_submit_button(
+                        "Save Membership"
+                    )
+
+                    if submitted:
+                     if not membership_type.strip():
+                      st.error("Membership Type is required.")
+                    elif expiration_date < start_date:
+                     st.error("Expiration Date cannot be before Start Date.")
+                    else:
+                     connection = get_connection()
+
+                    connection.execute(
+                    """
+                    INSERT INTO MEMBERSHIP
+                    (alumni_id, membership_type, start_date, expiration_date)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        alumni_options[selected_alumni],
+                        membership_type,
+                        str(start_date),
+                        str(expiration_date)
+                    )
+                )
+
+                    connection.commit()
+                    connection.close()
+
+                    st.success("Membership saved successfully!")    
+
+
 
 elif page == "Contributions":
-    st.write("Manage alumni donations and contributions.")
+    st.header("Add Alumni Contribution")
+
+    connection = get_connection()
+
+    alumni = connection.execute(
+        "SELECT alumni_id, first_name, last_name FROM ALUMNI"
+    ).fetchall()
+
+    connection.close()
+
+    if alumni:
+        alumni_options = {
+            f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
+            for person in alumni
+        }
+
+        with st.form("contribution_form"):
+            selected_alumni = st.selectbox(
+                "Select Alumni",
+                list(alumni_options.keys())
+            )
+
+            amount = st.number_input(
+                "Contribution Amount ($)",
+                min_value=0.01,
+                step=1.00
+            )
+
+            contribution_date = st.date_input(
+                "Contribution Date"
+            )
+
+            payment_method = st.selectbox(
+                "Payment Method",
+                ["Credit Card", "PayPal", "Cash", "Bank Transfer"]
+            )
+
+            submitted = st.form_submit_button(
+                "Save Contribution"
+            )
+
+        if submitted:
+            connection = get_connection()
+
+            connection.execute(
+                """
+                INSERT INTO CONTRIBUTION
+                (alumni_id, amount, contribution_date, payment_method)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    alumni_options[selected_alumni],
+                    amount,
+                    str(contribution_date),
+                    payment_method
+                )
+            )
+
+            connection.commit()
+            connection.close()
+
+            st.success("Contribution saved successfully!")
+
+    else:
+        st.warning("Register an alumnus before adding contributions.")
 
 elif page == "Events":
-    st.write("Manage alumni events.")
+    st.header("Add Alumni Event")
+
+    connection = get_connection()
+
+    alumni = connection.execute(
+        "SELECT alumni_id, first_name, last_name FROM ALUMNI"
+    ).fetchall()
+
+    connection.close()
+
+    if alumni:
+        alumni_options = {
+            f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
+            for person in alumni
+        }
+
+        with st.form("event_form"):
+            selected_alumni = st.selectbox(
+                "Select Alumni",
+                list(alumni_options.keys())
+            )
+
+            event_name = st.text_input(
+                "Event Name"
+            )
+
+            event_date = st.date_input(
+                "Event Date"
+            )
+
+            location = st.text_input(
+                "Event Location"
+            )
+
+            submitted = st.form_submit_button(
+                "Save Event"
+            )
+
+        if submitted:
+            if not event_name.strip():
+                st.error("Event Name is required.")
+            else:
+                connection = get_connection()
+
+                connection.execute(
+                    """
+                    INSERT INTO EVENTS
+                    (alumni_id, event_name, event_date, location)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        alumni_options[selected_alumni],
+                        event_name,
+                        str(event_date),
+                        location
+                    )
+                )
+
+                connection.commit()
+                connection.close()
+
+                st.success("Event saved successfully!")
+
+    else:
+        st.warning("Register an alumnus before adding events.")
