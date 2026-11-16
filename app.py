@@ -34,6 +34,54 @@ st.header(page)
 
 if page == "Dashboard":
     st.write("Welcome to the Alumni Dashboard!")
+    connection = get_connection()
+
+    total_alumni = connection.execute(
+        "SELECT COUNT(*) FROM ALUMNI"
+    ).fetchone()[0]
+
+    connection.close()
+
+    st.metric("Total Registered Alumni", total_alumni)
+    connection = get_connection()
+
+    total_memberships = connection.execute(
+        "SELECT COUNT(*) FROM MEMBERSHIP"
+    ).fetchone()[0]
+
+    connection.close()
+
+    st.metric("Total Memberships", total_memberships)
+    connection = get_connection()
+
+    total_events = connection.execute(
+        "SELECT COUNT(*) FROM EVENTS"
+    ).fetchone()[0]
+
+    connection.close()
+
+    st.metric("Total Events", total_events)
+    connection = get_connection()
+
+    total_contributions = connection.execute(
+        "SELECT COUNT(*) FROM CONTRIBUTION"
+    ).fetchone()[0]
+
+    connection.close()
+
+    st.metric("Total Contributions", total_contributions)
+    connection = get_connection()
+
+    total_donations = connection.execute(
+        "SELECT SUM(amount) FROM CONTRIBUTION"
+    ).fetchone()[0]
+
+    connection.close()
+
+    if total_donations is None:
+        total_donations = 0
+
+    st.metric("Total Money Donated", f"${total_donations:,.2f}")
     st.subheader("Registered Alumni")
 
     connection = get_connection()
