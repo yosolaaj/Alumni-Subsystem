@@ -24,7 +24,8 @@ page = st.sidebar.radio(
         "Professional Affiliations",
         "Membership",
         "Contributions",
-        "Events"
+        "Events",
+        "Generate Mailing List"
     ]
 )
 
@@ -314,10 +315,8 @@ elif page == "Membership":
                         str(expiration_date)
                     )
                 )
-
                     connection.commit()
                     connection.close()
-
                     st.success("Membership saved successfully!")    
 
 
@@ -455,3 +454,36 @@ elif page == "Events":
 
     else:
         st.warning("Register an alumnus before adding events.")
+
+elif page == "Generate Mailing List":
+    st.subheader("Generate Alumni Mailing List")
+
+    connection = get_connection()
+
+    alumni = connection.execute(
+        "SELECT first_name, last_name, email FROM ALUMNI"
+    ).fetchall()
+
+    connection.close()
+
+    if alumni:
+        import pandas as pd
+
+        df = pd.DataFrame(
+            alumni,
+            columns=["First Name", "Last Name", "Email"]
+        )
+
+        st.dataframe(df)
+
+        csv = df.to_csv(index=False)
+
+        st.download_button(
+            label="Download Mailing List",
+            data=csv,
+            file_name="howard_alumni_mailing_list.csv",
+            mime="text/csv"
+        )
+
+    else:
+        st.warning("No alumni records found.")
