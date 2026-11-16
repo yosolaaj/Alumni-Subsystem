@@ -25,7 +25,8 @@ page = st.sidebar.radio(
         "Membership",
         "Contributions",
         "Events",
-        "Generate Mailing List"
+        "Generate Mailing List",
+        "Manage Alumni Records"
     ]
 )
 
@@ -487,3 +488,93 @@ elif page == "Generate Mailing List":
 
     else:
         st.warning("No alumni records found.")
+
+elif page == "Manage Alumni Records":
+    st.subheader("Manage Alumni Records")
+
+    connection = get_connection()
+
+    alumni = connection.execute(
+        "SELECT * FROM ALUMNI"
+    ).fetchall()
+
+    connection.close()
+
+    if alumni:
+     import pandas as pd
+
+    df = pd.DataFrame(alumni)
+
+    search = st.text_input("Search Alumni by Name")
+
+    if search:
+        df = df[
+            df[1].astype(str).str.contains(search, case=False, regex=False) |
+            df[2].astype(str).str.contains(search, case=False, regex=False)
+        ]
+
+    st.dataframe(df)
+    st.subheader("Edit Alumni Information")
+
+    selected_id = st.selectbox(
+        "Select Alumni ID to Edit",
+        [row[0] for row in alumni]
+    )
+    selected_alumni = next(
+        row for row in alumni if row[0] == selected_id
+    )
+
+    st.write("Selected Alumni:", selected_alumni[1], selected_alumni[2])
+    with st.form("edit_alumni_form"):
+
+        first_name = st.text_input(
+            "First Name",
+            value=selected_alumni[1]
+        )
+
+        last_name = st.text_input(
+            "Last Name",
+            value=selected_alumni[2]
+        )
+
+        email = st.text_input(
+            "Email",
+            value=selected_alumni[3]
+        )
+
+        phone = st.text_input(
+            "Phone Number",
+            value=selected_alumni[4]
+        )
+
+        submitted = st.form_submit_button("Update Alumni")
+    if submitted:
+        connection = get_connection()
+
+        connection.execute(
+            """
+            UPDATE ALUMNI
+            SET first_name = ?,
+                last_name = ?,
+                email = ?,
+                phone = ?
+            WHERE alumni_id = ?
+            """,
+            (
+                first_name,
+                last_name,
+                email,
+                phone,
+                selected_id
+            )
+        )
+
+        connection.commit()
+        connection.close()
+
+        st.success("Alumni information updated successfully!")
+        st.rerun()
+
+else:
+    st.warning("No alumni records found.")
+
