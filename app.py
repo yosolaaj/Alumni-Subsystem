@@ -243,19 +243,16 @@ elif page == "Employment":
                 )
 
 elif page == "Professional Affiliations":
-        st.header("Add Professional Affiliation")
+    st.header("Add Professional Affiliation")
 
-        connection = get_connection()
-
-        alumni = connection.execute(
+    connection = get_connection()
+    alumni = connection.execute(
         "SELECT alumni_id, first_name, last_name FROM ALUMNI"
     ).fetchall()
+    connection.close()
 
-        connection.close()
-
-
-        if alumni:
-         alumni_options = {
+    if alumni:
+        alumni_options = {
             f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
             for person in alumni
         }
@@ -265,24 +262,15 @@ elif page == "Professional Affiliations":
                 "Select Alumni",
                 list(alumni_options.keys())
             )
-            organization_name = st.text_input(
-                "Organization Name"
-            )
+            organization_name = st.text_input("Organization Name")
+            position = st.text_input("Position or Role")
+            submitted = st.form_submit_button("Save Professional Affiliation")
 
-            position = st.text_input(
-                "Position or Role"
-            )
-
-            submitted = st.form_submit_button(
-                "Save Professional Affiliation"
-            )
-
-            if submitted:
-             if not organization_name.strip():
+        if submitted:
+            if not organization_name.strip():
                 st.error("Organization Name is required.")
             else:
                 connection = get_connection()
-
                 connection.execute(
                     """
                     INSERT INTO PROFESSIONAL_AFFILIATION
@@ -295,63 +283,45 @@ elif page == "Professional Affiliations":
                         position
                     )
                 )
-
                 connection.commit()
                 connection.close()
-
-                    
-
-                st.success(
-                    "Professional affiliation saved successfully!"
-                )
+                st.success("Professional affiliation saved successfully!")
+    else:
+        st.warning("Register an alumnus before adding affiliations.")
 elif page == "Membership":
-        st.header("Add Alumni Membership")
+    st.header("Add Alumni Membership")
 
-        connection = get_connection()
-
-        alumni = connection.execute(
+    connection = get_connection()
+    alumni = connection.execute(
         "SELECT alumni_id, first_name, last_name FROM ALUMNI"
     ).fetchall()
+    connection.close()
 
-        connection.close()
+    if alumni:
+        alumni_options = {
+            f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
+            for person in alumni
+        }
 
-        if alumni:
-                alumni_options = {
-                    f"{person[1]} {person[2]} (ID: {person[0]})": person[0]
-                    for person in alumni
-                }
-        
-                with st.form("membership_form"):
-                    selected_alumni = st.selectbox(
-                        "Select Alumni",
-                        list(alumni_options.keys())
-                    )
-        
-                    membership_type = st.text_input(
-                        "Membership Type"
-                    )
-        
-                    start_date = st.date_input(
-                        "Start Date"
-                    )
-        
-                    expiration_date = st.date_input(
-                        "Expiration Date"
-                    )
-        
-                    submitted = st.form_submit_button(
-                        "Save Membership"
-                    )
+        with st.form("membership_form"):
+            selected_alumni = st.selectbox(
+                "Select Alumni",
+                list(alumni_options.keys())
+            )
+            membership_type = st.selectbox(
+                "Membership Type",
+                ["Annual", "Young Alumni", "Lifetime"]
+            )
+            start_date = st.date_input("Start Date")
+            expiration_date = st.date_input("Expiration Date")
+            submitted = st.form_submit_button("Save Membership")
 
-                    if submitted:
-                     if not membership_type.strip():
-                      st.error("Membership Type is required.")
-                    elif expiration_date < start_date:
-                     st.error("Expiration Date cannot be before Start Date.")
-                    else:
-                     connection = get_connection()
-
-                    connection.execute(
+        if submitted:
+            if expiration_date < start_date:
+                st.error("Expiration Date cannot be before Start Date.")
+            else:
+                connection = get_connection()
+                connection.execute(
                     """
                     INSERT INTO MEMBERSHIP
                     (alumni_id, membership_type, start_date, expiration_date)
@@ -364,9 +334,11 @@ elif page == "Membership":
                         str(expiration_date)
                     )
                 )
-                    connection.commit()
-                    connection.close()
-                    st.success("Membership saved successfully!")    
+                connection.commit()
+                connection.close()
+                st.success("Membership saved successfully!")
+    else:
+        st.warning("Register an alumnus before adding memberships.")    
 
 
 
