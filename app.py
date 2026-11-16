@@ -188,9 +188,9 @@ elif page == "Employment":
                     )
 
             else:
-             st.warning(
-            "Register an alumnus before adding employment records."
-        )
+                    st.warning(
+                    "Register an alumnus before adding employment records."
+                )
 
 elif page == "Professional Affiliations":
     st.write("Manage professional affiliations.")
