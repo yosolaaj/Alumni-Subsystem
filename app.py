@@ -26,7 +26,8 @@ page = st.sidebar.radio(
         "Contributions",
         "Events",
         "Generate Mailing List",
-        "Manage Alumni Records"
+        "Manage Alumni Records",
+        "Admin Login"
     ]
 )
 
@@ -598,3 +599,16 @@ elif page == "Manage Alumni Records":
 else:
     st.warning("No alumni records found.")
 
+if page == "Admin Login":
+     st.subheader("Admin Login")
+
+with st.form("admin_login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        login = st.form_submit_button("Login")
+
+if login:
+        if username == "admin" and password == "admin123":
+            st.success("Login successful!")
+        else:
+            st.error("Incorrect username or password.")
