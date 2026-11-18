@@ -1,7 +1,32 @@
 import sqlite3
 import streamlit as st
 from database import create_tables, get_connection
+import hashlib
+import hmac
+import os
+
 create_tables()
+def hash_password(password):
+    salt = os.urandom(16)
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode(), salt, 600000
+    )
+    return salt.hex() + ":" + password_hash.hex()
+
+
+def verify_password(password, stored_hash):
+    try:
+        salt_hex, hash_hex = stored_hash.split(":")
+        salt = bytes.fromhex(salt_hex)
+        expected_hash = bytes.fromhex(hash_hex)
+
+        actual_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode(), salt, 600000
+        )
+
+        return hmac.compare_digest(actual_hash, expected_hash)
+    except (ValueError, TypeError):
+        return False
 
 st.set_page_config(
     page_title="Alumni Management System",
@@ -12,24 +37,122 @@ st.set_page_config(
 st.title("🎓 Alumni Management System")
 
 st.write("Welcome to the Alumni Management System!")
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+    st.title("Howard Alumni Portal")
+
+    login_tab, signup_tab = st.tabs(["Log In", "Sign Up"])
+
+    with signup_tab:
+        st.subheader("Create an Account")
+
+        with st.form("signup_form"):
+            name = st.text_input("Full Name")
+            email = st.text_input("Email Address")
+            password = st.text_input("Password", type="password")
+            confirm = st.text_input("Confirm Password", type="password")
+
+            submitted = st.form_submit_button("Sign Up")
+
+            if submitted:
+                email = email.strip().lower()
+
+                if not name.strip() or not email or not password:
+                    st.error("Please complete all fields.")
+                elif "@" not in email:
+                    st.error("Enter a valid email address.")
+                elif len(password) < 8:
+                    st.error("Password must contain at least 8 characters.")
+                elif password != confirm:
+                    st.error("Passwords do not match.")
+                else:
+                    connection = get_connection()
+
+                    try:
+                        connection.execute(
+                            """
+                            INSERT INTO USERS
+                            (full_name, email, password_hash, role)
+                            VALUES (?, ?, ?, ?)
+                            """,
+                            (
+                                name.strip(),
+                                email,
+                                hash_password(password),
+                                "alumni"
+                            )
+                        )
+                        connection.commit()
+                        st.success("Account created! Please log in.")
+
+                    except sqlite3.IntegrityError:
+                        st.error("An account with this email already exists.")
+
+                    finally:
+                        connection.close()
+
+    with login_tab:
+        with st.form("login_form"):
+            email = st.text_input("Email Address")
+            password = st.text_input("Password", type="password")
+
+            login_button = st.form_submit_button("Log In")
+
+            if login_button:
+                connection = get_connection()
+                user = connection.execute(
+                """
+                SELECT user_id, full_name, email, password_hash, role
+                FROM USERS
+                WHERE email = ?
+                """,
+                (email.strip().lower(),)
+            ).fetchone()
+
+                connection.close()
+                
+
+                if user and verify_password(password, user[3]):
+                 st.session_state.logged_in = True
+                 st.session_state.user_id = user[0]
+                 st.session_state.user_name = user[1]
+                 st.session_state.role = user[4]
+                 st.write("Current role:", st.session_state.role)
+                 st.rerun()
+            else:
+                st.error("Invalid email or password.")
+
+    st.stop()
+
+    
+    st.sidebar.write(f"Welcome, {st.session_state.user_name}!")
+
+if st.sidebar.button("Log Out"):
+    st.session_state.clear()
+    st.rerun()
 
 st.sidebar.title("Navigation")
+st.sidebar.write("Current role:", st.session_state.role)
 
-page = st.sidebar.radio(
-    "Select a Page",
-    [
-        "Dashboard",
-        "Alumni Registration",
-        "Employment",
-        "Professional Affiliations",
-        "Membership",
-        "Contributions",
-        "Events",
+pages = [
+    "Dashboard",
+    "Alumni Registration",
+    "Employment",
+    "Professional Affiliations",
+    "Membership",
+    "Contributions",
+    "Events"
+]
+
+if st.session_state.role == "admin":
+    pages.extend([
         "Generate Mailing List",
-        "Manage Alumni Records",
-        "Admin Login"
-    ]
-)
+        "Manage Alumni Records"
+    ])
+
+page = st.sidebar.radio("Select a Page", pages)
 
 st.header(page)
 
@@ -599,16 +722,4 @@ elif page == "Manage Alumni Records":
 else:
     st.warning("No alumni records found.")
 
-if page == "Admin Login":
-     st.subheader("Admin Login")
 
-with st.form("admin_login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        login = st.form_submit_button("Login")
-
-if login:
-        if username == "admin" and password == "admin123":
-            st.success("Login successful!")
-        else:
-            st.error("Incorrect username or password.")

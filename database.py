@@ -70,7 +70,15 @@ def create_tables():
         FOREIGN KEY (alumni_id) REFERENCES ALUMNI(alumni_id)
     );
     """)
-
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS USERS (
+            user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'alumni'
+        )
+    """)
     connection.commit()
     connection.close()
 
